@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shopify Product Price Update</title>
+    <style>
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 1.5rem;
+            background-color: #333;
+            color: whitesmoke;
+        }
+
+        input,
+        button {
+            font: inherit;
+            width: max-content;
+        }
+
+        form {
+            display: flex;
+            flex-flow: column nowrap;
+            gap: 1.5rem;
+        }
+    </style>
+</head>
+<body>
+    <h1>Shopify Product Price Update</h1>
+    <form id="uploadForm">
+        <input type="file" name="file" id="file" accept=".csv" required>
+        <button>Submit</button>
+    </form>
+    <h2></h2>
+    <h3></h3>
+    <script>
+        const form = document.getElementById('uploadForm');
+        const h2 = document.querySelector('h2');
+        const h3 = document.querySelector('h3');
+
+        const sendFiles = async () => {
+            const csvFile = document.getElementById('file').files[0];
+            const formData = new FormData();
+            
+            formData.append('file', csvFile);
+
+            const response = await fetch('http://localhost:3000/update-prices-shopify', {
+                method: 'POST',
+                body: formData
+            });
+
+            const data = await response.json();
+            console.log(data);
+
+            h2.textContent = data.message;
+            h3.textContent = data.updatedProducts;
+        }
+
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            sendFiles();
+        });
+    </script>
+</body>
+</html>
