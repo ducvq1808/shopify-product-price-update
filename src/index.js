@@ -9,6 +9,10 @@ const db = require('../config/database');
 const Products = require('./models/Products');
 const Shopify = require('shopify-api-node');
 
+const fileExists = require('./middleware/fileExist');
+const fileExtLimiter = require('./middleware/fileExtLimiter');
+const fileSizeLimiter = require('./middleware/fileSizeLimiter');
+
 const server = express();
 
 const shopify = new Shopify({
@@ -56,14 +60,12 @@ server.get('/sync-products', async (req, res) => {
 //Endpoint to receive uploaded csv file and use it to update products price in database and Shopify store
 server.post('/update-prices-shopify',
   fileUpload({ createParentPath: true }),
+  fileExists,
+  fileExtLimiter(['.csv']),
+  fileSizeLimiter,
   async (req, res) => {
     try{
-      if (!req.files || Object.keys(req.files).length === 0) {
-        return res.status(400).json({ status: "error", message: 'No files were uploaded.' });
-      }
-  
       const file = req.files.file;
-      console.log(file);
   
       //Generate file path. Add timestamp to file name to avoid overwriting existing files
       const filePath = './uploads/' + Date.now() + '_' + file.name;
@@ -130,24 +132,27 @@ async function fetchProductVariants(cursor = null) {
         }
     `;
 
-  //Fetch products from Shopify store
-  const response = await shopify.graphql(query, { cursor });
-
-  console.log(response);
-
-  //Get products from response
-  const products = response.productVariants.edges.map((edge) => {
-    return {
-      id: edge.node.id,
-      title: edge.node.title,
-      original_price: edge.node.price,
-    };
-  });
-
-  const hasNextPage = response.productVariants.pageInfo.hasNextPage;
-  const endCursor = response.productVariants.pageInfo.endCursor;
-
-  return { products, hasNextPage, endCursor };
+  try {
+    //Fetch products from Shopify store
+    const response = await shopify.graphql(query, { cursor });
+  
+    //Get products from response
+    const products = response.productVariants.edges.map((edge) => {
+      return {
+        id: edge.node.id,
+        title: edge.node.title,
+        original_price: edge.node.price,
+      };
+    });
+  
+    const hasNextPage = response.productVariants.pageInfo.hasNextPage;
+    const endCursor = response.productVariants.pageInfo.endCursor;
+  
+    return { products, hasNextPage, endCursor };
+  } catch (error) {
+    console.log('Error fetching products variant from Shopify:', error);
+    throw error;
+  }
 }
 
 //Fetch all products variants from Shopify store using GraphQL API. Add cursor pagination to query to fetch all products variants.
@@ -156,15 +161,19 @@ async function fetchAllProductVariants() {
   let hasNextPage = true;
   let cursor = null;
 
-  let loopCount = 0;
-  while (hasNextPage) {
-    const response = await fetchProductVariants(cursor);
-    allVariants = allVariants.concat(response.products);
-    hasNextPage = response.hasNextPage;
-    cursor = response.endCursor;
+  try {
+    while (hasNextPage) {
+      const response = await fetchProductVariants(cursor);
+      allVariants = allVariants.concat(response.products);
+      hasNextPage = response.hasNextPage;
+      cursor = response.endCursor;
+    }
+  
+    return allVariants;
+  } catch (error) {
+    console.log('Error fetching all products variants from Shopify:', error);
+    throw error;
   }
-
-  return allVariants;
 }
 
 const port = 3000;

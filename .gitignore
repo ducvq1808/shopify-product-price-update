@@ -128,8 +128,7 @@ dist
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
-uploads/1692740119438_shopify_test_price_update.csv
-uploads/1692742189021_shopify_test_price_update.csv
-uploads/sample.csv
+uploads/
+!uploads/sample.csv
 database/dev.sqlite3
 .vscode/launch.json
