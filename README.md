@@ -1,11 +1,9 @@
 
 # Shopify Product Price Update
 
+## Features
 - Allow sync products from Shopify to local database.
-- Allow upload csv to update product prices
-
-
-
+- Allow upload csv to update product prices on Shopify.
 
 ## Installation
 
@@ -44,19 +42,19 @@ Start the app in development mode
 #### Get all products saved in database
 
 ```http
-  GET /api/products
+  GET /products
 ```
 
 #### Sync products from Shopify to database
 
 ```http
-  GET /api/sync-products
+  GET /sync-products
 ```
 
 #### Take csv file and update Shopify product prices
 
 ```http
-  POST /api/update-prices-shopify
+  POST /update-prices-shopify
 ```
 
 | Parameter | Type     | Description                       |
